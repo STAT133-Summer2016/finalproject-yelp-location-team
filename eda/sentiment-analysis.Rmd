@@ -1,0 +1,70 @@
+---
+title: "sentiment-analysis"
+author: "Anuj Desai"
+date: "August 1, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(jsonlite)
+library(stringr)
+library(ggplot2)
+library(dplyr)
+library(tidytext)
+library(tm)
+```
+
+## Sentiment Analysis on Text Reviews for Yelp
+
+Sentiment analysis, or opinion mining, makes use of natural language processing to analyze pieces of text and determine the attitude of the speaker or writer. In order to find relevant lexicons to explore this topic with the Yelp review data, I researched different lexicons and found ANEW (Affective Norms for English Words), a "sentiment lexcion" that scores words for valence. 
+
+However, upon further research, I came across an article written by Finn ˚Arup Nielsen, where he compares a sentiment lexicon he created to ANEW. His list, AFINN, contains a list of English words and assigns an integer from -5 (negative) to +5 (positive) to each word based on its sentiment. He concluded that his word list better classifies sentiment rating than ANEW on Twitter sentiment analysis. Since Yelp ratings are similar to tweets, I'll use AFINN for this exploration. 
+
+To see the full study, check out the paper found here: http://www2.imm.dtu.dk/pubdb/views/edoc_download.php/6006/pdf/imm6006.pdf.
+
+Now to apply this sentiment analysis to the Yelp review dataset, I have to mutate the data so that each word for every review exists in one row. I also need to remove stop words like "the", "and", "I", etc. since they don't indicate anything about the attitude of the reviewer and shouldn't affect the valence score. A library called __tm__ for text mining can eliminate stop words. 
+```{r, eval = F}
+review_words <- reviews %>% 
+  mutate(words = str_split(text, "[ ,.]")) %>% 
+  unnest(words)
+
+# create corpus for tm
+corpus <- Corpus(VectorSource(review_words$words))
+# Convert to lower-case
+corpus <- tm_map(corpus, tolower)
+# remove stop_words
+corpus <- tm_map(corpus, function(x) removeWords(x,stopwords()))
+
+head(review_words, n = 5)
+```
+
+Too slow. I'll try the library __tidytext__. This library also let's me generate valence scores using the AFINN library without having to write an unnecessarily long function. 
+
+```{r, eval = F}
+# unnest_tokens splits column into tokens using tokenizers package
+# splits "text" column into individual words to analyze sentiment for further
+# exploration
+reviews_text <- reviews %>% 
+  select(business_id, review_id, stars, text) %>%
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  arrange(review_id)
+
+# rank words from -5 (negativity) to 5 (positivity) using AFINN lexicon
+# sentiments: 
+#   data frame with 4 variables: word, sentiment, lexicon, score
+# lexicon can be "nrc", "bing", or "AFINN"
+word_affinity <- sentiments %>% 
+  filter(lexicon == "AFINN") %>% 
+  select(word, score)
+
+# calculate mean for each group of stars
+review_scores <- reviews_text %>% 
+  inner_join(word_affinity, by = "word") %>% 
+  group_by(review_id, stars) %>% 
+  summarise(sentiment = mean(score))
+```
+
+
