@@ -56,13 +56,13 @@ reviews_text <- reviews %>%
 # sentiments: 
 #   data frame with 4 variables: word, sentiment, lexicon, score
 # lexicon can be "nrc", "bing", or "AFINN"
-word_affinity <- sentiments %>% 
+valence_score <- sentiments %>% 
   filter(lexicon == "AFINN") %>% 
   select(word, score)
 
 # calculate mean for each group of stars
 review_scores <- reviews_text %>% 
-  inner_join(word_affinity, by = "word") %>% 
+  inner_join(valence_score, by = "word") %>% 
   group_by(review_id, stars) %>% 
   summarise(sentiment = mean(score))
 ```
@@ -71,22 +71,11 @@ Pretty fast. I'll stick to this library and generate five box-plots to see if th
 
 ```{r, eval = F}
 # boxplot for each group
-ggplot(reviews_scores) +
+ggplot(review_scores) +
   geom_boxplot(aes(stars, sentiment, group = stars)) +
-  labs(x = "Business Rating",
+  labs(x = "Business Star Rating",
        y = "Mean Sentiment Score",
-       title = "Mean Sentiment Score vs. Business Rating")
-
-one <- reviews_text %>% 
-  filter(stars == 1) %>% 
-  group_by(word) %>% 
-  count() %>% 
-  top_n(200) %>% 
-  arrange(n)
-
-wordcloud::wordcloud(one$word, one$n, scale = c(5, 0.5),
-                     random.order = F, random.color = F,
-                     use.r.layout = T,
-                     colors = RColorBrewer::brewer.pal(10, "Reds"))
+       title = "Mean Sentiment Score vs. Business Star Rating") +
+  theme_bw()
 ```
 
