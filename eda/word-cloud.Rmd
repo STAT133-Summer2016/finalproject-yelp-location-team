@@ -1,0 +1,42 @@
+---
+title: "word-cloud"
+author: "Anuj Desai"
+date: "August 1, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(wordcloud)
+library(readr)
+library(dplyr)
+library(tidyr)
+```
+
+## Word Clouds
+```{r}
+reviews_text <- read_csv("../clean_data/reviews_text.csv")
+one <- reviews_text %>% 
+  filter(stars == 1) %>% 
+  group_by(word) %>% 
+  count() %>% 
+  top_n(100) %>% 
+  arrange(n)
+five <- reviews_text %>% 
+  filter(stars == 5) %>% 
+  group_by(word) %>% 
+  count() %>% 
+  top_n(100) %>% 
+  arrange(n)
+
+col <- c("salmon1", "tomato2", "orangered3", "red3", "firebrick4")
+wordcloud(one$word, one$n, scale = c(4, 0.25),
+          random.order = F, random.color = F,
+          use.r.layout = T, rot.per = .35,
+          colors = col)
+green <- c("palegreen", "springgreen2", "mediumseagreen", "forestgreen", "darkgreen")
+wordcloud(five$word, five$n, scale = c(4, 0.25),
+          random.order = F, random.color = F,
+          use.r.layout = T, rot.per = .35,
+          colors = green)
+```
