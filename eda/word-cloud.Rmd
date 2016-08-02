@@ -14,6 +14,8 @@ library(tidyr)
 ```
 
 ## Word Clouds
+
+Created some word clouds for one-star and five-star businesses to see if there's a difference between the words reviewers use for each rating using __wordcloud__ library. Expect to see a relationship between negative words and one-star ratings and positive words and five-star ratings.
 ```{r}
 reviews_text <- read_csv("../clean_data/reviews_text.csv")
 one <- reviews_text %>% 
@@ -22,6 +24,7 @@ one <- reviews_text %>%
   count() %>% 
   top_n(100) %>% 
   arrange(n)
+
 five <- reviews_text %>% 
   filter(stars == 5) %>% 
   group_by(word) %>% 
@@ -34,9 +37,12 @@ wordcloud(one$word, one$n, scale = c(4, 0.25),
           random.order = F, random.color = F,
           use.r.layout = T, rot.per = .35,
           colors = col)
-green <- c("palegreen", "springgreen2", "mediumseagreen", "forestgreen", "darkgreen")
+green <- c("chartreuse2", "mediumseagreen", "forestgreen", 
+           "seagreen", "darkgreen")
 wordcloud(five$word, five$n, scale = c(4, 0.25),
           random.order = F, random.color = F,
           use.r.layout = T, rot.per = .35,
           colors = green)
 ```
+
+The main words are similar for both clouds like "food" and "service", probably because it was bad food and service for one-star restaurants and great food and service for five-star restaurants. Evidence of this is present in the other words like "love", "friendly", "excellent", "happy" for five-stars and "bad", "rude", "worst", "wait", "horrible" for one-stars. 
