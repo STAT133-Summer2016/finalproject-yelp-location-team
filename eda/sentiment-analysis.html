@@ -127,21 +127,21 @@ $(document).ready(function () {
 <p>Sentiment analysis, or opinion mining, makes use of natural language processing to analyze pieces of text and determine the attitude of the speaker or writer. In order to find relevant lexicons to explore this topic with the Yelp review data, I researched different lexicons and found ANEW (Affective Norms for English Words), a “sentiment lexcion” that scores words for valence.</p>
 <p>However, upon further research, I came across an article written by Finn ˚Arup Nielsen, where he compares a sentiment lexicon he created to ANEW. His list, AFINN, contains a list of English words and assigns an integer from -5 (negative) to +5 (positive) to each word based on its sentiment. He concluded that his word list better classifies sentiment rating than ANEW on Twitter sentiment analysis. Since Yelp ratings are similar to tweets, I’ll use AFINN for this exploration.</p>
 <p>To see the full study, check out the paper found here: <a href="http://www2.imm.dtu.dk/pubdb/views/edoc_download.php/6006/pdf/imm6006.pdf" class="uri">http://www2.imm.dtu.dk/pubdb/views/edoc_download.php/6006/pdf/imm6006.pdf</a>.</p>
-<p>Now to apply this sentiment analysis to the Yelp review dataset, I have to mutate the data so that each word for every review exists in one row.</p>
+<p>Now to apply this sentiment analysis to the Yelp review dataset, I have to mutate the data so that each word for every review exists in one row. I also need to remove stop words like “the”, “and”, “I”, etc. since they don’t indicate anything about the attitude of the reviewer and shouldn’t affect the valence score. A library called <strong>tm</strong> for text mining can eliminate stop words.</p>
 <pre class="r"><code>review_words &lt;- reviews %&gt;% 
   mutate(words = str_split(text, &quot;[ ,.]&quot;)) %&gt;% 
   unnest(words)
 
-head(review_words, n = 5)</code></pre>
-<p>This appears to work, but takes forever to run. Now, I need to remove stop words like (“I”, “the”, “and”, etc.).</p>
-<pre class="r"><code>reviews &lt;- fromJSON(sprintf(&quot;[%s]&quot;, 
-                    paste(read_lines(&quot;../raw_data/yelp_academic_dataset_review.json&quot;, 
-                                     n_max = 500000), 
-                    collapse = &quot;,&quot;))) %&gt;% 
-  flatten() %&gt;% 
-  tbl_df()
+# create corpus for tm
+corpus &lt;- Corpus(VectorSource(review_words$words))
+# Convert to lower-case
+corpus &lt;- tm_map(corpus, tolower)
+# remove stop_words
+corpus &lt;- tm_map(corpus, function(x) removeWords(x,stopwords()))
 
-# unnest_tokens splits column into tokens using tokenizers package
+head(review_words, n = 5)</code></pre>
+<p>Too slow. I’ll try the library <strong>tidytext</strong>. This library also let’s me generate valence scores using the AFINN library without having to write an unnecessarily long function.</p>
+<pre class="r"><code># unnest_tokens splits column into tokens using tokenizers package
 # splits &quot;text&quot; column into individual words to analyze sentiment for further
 # exploration
 reviews_text &lt;- reviews %&gt;% 
@@ -158,16 +158,18 @@ word_affinity &lt;- sentiments %&gt;%
   filter(lexicon == &quot;AFINN&quot;) %&gt;% 
   select(word, score)
 
-reviews_text &lt;- reviews_text %&gt;% 
+# calculate mean for each group of stars
+review_scores &lt;- reviews_text %&gt;% 
   inner_join(word_affinity, by = &quot;word&quot;) %&gt;% 
   group_by(review_id, stars) %&gt;% 
-  summarise(sentiment = mean(score))
-
+  summarise(sentiment = mean(score))</code></pre>
+<p>Pretty fast. I’ll stick to this library and generate five box-plots to see if there’s a positive correlation between mean sentiment score and restaurant rating.</p>
+<pre class="r"><code># boxplot for each group
 ggplot(reviews_text) +
   geom_boxplot(aes(stars, sentiment, group = stars)) +
   labs(x = &quot;Business Rating&quot;,
-       y = &quot;Average Sentiment Score&quot;,
-       title = &quot;Average Sentiment Score vs. Business Rating&quot;)</code></pre>
+       y = &quot;Mean Sentiment Score&quot;,
+       title = &quot;Mean Sentiment Score vs. Business Rating&quot;)</code></pre>
 </div>
 
 

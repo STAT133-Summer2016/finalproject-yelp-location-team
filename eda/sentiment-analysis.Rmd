@@ -67,4 +67,26 @@ review_scores <- reviews_text %>%
   summarise(sentiment = mean(score))
 ```
 
+Pretty fast. I'll stick to this library and generate five box-plots to see if there's a positive correlation between mean sentiment score and restaurant rating.
+
+```{r, eval = F}
+# boxplot for each group
+ggplot(reviews_scores) +
+  geom_boxplot(aes(stars, sentiment, group = stars)) +
+  labs(x = "Business Rating",
+       y = "Mean Sentiment Score",
+       title = "Mean Sentiment Score vs. Business Rating")
+
+one <- reviews_text %>% 
+  filter(stars == 1) %>% 
+  group_by(word) %>% 
+  count() %>% 
+  top_n(200) %>% 
+  arrange(n)
+
+wordcloud::wordcloud(one$word, one$n, scale = c(5, 0.5),
+                     random.order = F, random.color = F,
+                     use.r.layout = T,
+                     colors = RColorBrewer::brewer.pal(10, "Reds"))
+```
 
