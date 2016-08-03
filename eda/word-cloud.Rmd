@@ -11,6 +11,7 @@ library(wordcloud)
 library(readr)
 library(dplyr)
 library(tidyr)
+source("../functions/wordcloud.R")
 ```
 
 ## Word Clouds
@@ -32,17 +33,11 @@ five <- reviews_text %>%
   top_n(100) %>% 
   arrange(n)
 
-col <- c("salmon1", "tomato2", "orangered3", "red3", "firebrick4")
-wordcloud(one$word, one$n, scale = c(4, 0.25),
-          random.order = F, random.color = F,
-          use.r.layout = T, rot.per = .35,
-          colors = col)
+red <- c("salmon1", "tomato2", "orangered3", "red3", "firebrick4")
+word_cloud(one$word, one$n, red)
 green <- c("chartreuse2", "mediumseagreen", "forestgreen", 
            "seagreen", "darkgreen")
-wordcloud(five$word, five$n, scale = c(4, 0.25),
-          random.order = F, random.color = F,
-          use.r.layout = T, rot.per = .35,
-          colors = green)
+word_cloud(five$word, five$n, green)
 ```
 
 The main words are similar for both clouds like "food" and "service", probably because it was bad food and service for one-star restaurants and great food and service for five-star restaurants. Evidence of this is present in the other words like "love", "friendly", "excellent", "happy" for five-stars and "bad", "rude", "worst", "wait", "horrible" for one-stars. 
