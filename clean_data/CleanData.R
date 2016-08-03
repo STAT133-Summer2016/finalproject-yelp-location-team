@@ -7,20 +7,20 @@ library(stringr)
 
 # Read in raw data
 business <- fromJSON(sprintf("[%s]", 
-                     paste(read_lines("../rawdata/yelp_academic_dataset_business.json"), 
+                     paste(read_lines("../raw_data/yelp_academic_dataset_business.json"), 
                      collapse = ","))) %>% 
   flatten() %>% 
   tbl_df()
 
 reviews <- fromJSON(sprintf("[%s]", 
-                    paste(read_lines("../rawdata/yelp_academic_dataset_business.json", 
+                    paste(read_lines("../raw_data/yelp_academic_dataset_review.json", 
                                      n_max = 500000), 
                     collapse = ","))) %>% 
   flatten() %>% 
   tbl_df()
 
 users <- fromJSON(sprintf("[%s]", 
-                  paste(read_lines("../rawdata/yelp_academic_dataset_users.json"), 
+                  paste(read_lines("../raw_data/yelp_academic_dataset_user.json"), 
                   collapse = ","))) %>% 
   flatten() %>% 
   tbl_df()
@@ -70,4 +70,4 @@ summaries <- review_words %>%
 
 # WRITE ALL CSV FILES HERE
 write_csv(review_scores, "review_scores.csv")
-write_csv(review_words, "review_words.csv")
+write_csv(summaries, "summaries.csv")
