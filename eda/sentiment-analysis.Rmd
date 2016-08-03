@@ -24,8 +24,11 @@ However, upon further research, I came across an article written by Finn ˚Arup 
 
 To see the full study, check out the paper found here: http://www2.imm.dtu.dk/pubdb/views/edoc_download.php/6006/pdf/imm6006.pdf.
 
-Now to apply this sentiment analysis to the Yelp review dataset, I have to mutate the data so that each word for every review exists in one row. I also need to remove stop words like "the", "and", "I", etc. since they don't indicate anything about the attitude of the reviewer and shouldn't affect the valence score. A library called __tm__ for text mining can eliminate stop words. 
+Now to apply this sentiment analysis to the Yelp review dataset, I have to mutate the data so that each word for every review exists in one row. I also need to remove stop words like "the", "and", "I", etc. since they don't indicate anything about the attitude of the reviewer and shouldn't affect the valence score. A library called __tm__ for text mining can eliminate stop words.
+I'll read in the first 500,000 observations of the Yelp reviewers data, which has been written to a csv file.
 ```{r, eval = F}
+reviews <- read_csv("clean_data/reviews.csv")
+
 review_words <- reviews %>% 
   mutate(words = str_split(text, "[ ,.]")) %>% 
   unnest(words)
@@ -79,3 +82,15 @@ ggplot(review_scores) +
   theme_bw()
 ```
 
+Positive correlation exists! Some inaccuracy (outliers on boxplots). Find out most common positive and negative words in reviews, creating a summary of the counts.
+
+```{r}
+review_words <- reviews_text %>% 
+  count(review_id, business_id, stars, word) %>% 
+  ungroup() %>% 
+  group_by(business = n_distinct(business_id),
+           reviews = n(),
+           use = sum(n),
+           average_star = mean(stars)) %>% 
+  ungroup()
+```
