@@ -20,7 +20,7 @@ library(jsonlite)
 I wanted to see if YELP users' review ratings change when they are traveling. This required 3 different data sets: business data, reviews data and user data. In order to select samples that can represent user trends, 15 users that have most number of reviews were selected. By selecting columns that I need for plots,  three different data tables are joined. After grouping by 'user' one location where users are most familiar with is selected and I decided to compare this location to all the other locations. I have ignored data table rows that have  same number of reviews for all cities. 
 
 ```{r}
-user_reviews <- read_csv("user-reviews.csv")
+user_reviews <- read_csv("../clean_data/user-reviews.csv")
 ggplot(user_reviews, aes(x = max_review,
                          y = val)) +
   geom_bar(stat = "identity", 

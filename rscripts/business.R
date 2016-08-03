@@ -11,7 +11,7 @@ business <- fromJSON(sprintf("[%s]",
                              paste(readLines("yelp_academic_dataset_business.json"), 
                                    collapse = ","))) %>% 
   flatten() %>% 
-  select(open, categories, review_count, longitude, latitude, state, stars, latitude, `attributes.Noise Level`, `attributes.Attire`) %>% 
+  select(open, categories, review_count, state, stars, `attributes.Noise Level`, `attributes.Attire`, `attributes.Take-out`, `attributes.Takes Reservations` `attributes.Delivery`, `attributes.Outdoor Seating`, `attributes.Accepts Credit Cards`,`attributes.Happy Hour`) %>% 
   # should filter for restaurants 
   filter(open == TRUE, "Restaurants" %in% categories, state %in% state.abb)
 names(business) <- c("open", "categories", "count", "long", "lat", "state", "stars", "noise", "attire")
@@ -40,10 +40,11 @@ top_data <- us_business %>%
   group_by(state) %>% 
   tally()
 
-# Focusing on attribute noise level
-noise_data <- business %>% 
+big_cities <- business %>% 
   na.omit() %>% 
-  filter(state == "NV" | state == "AZ" | state == "NC" | state == "PA") %>% 
+  filter(state == "NV" | state == "AZ" | state == "NC" | state == "PA")
+# Focusing on attribute noise level
+noise_data <- big_cities %>% 
   group_by(state, noise) %>% 
   summarise(star = mean(stars)) 
 noise_data$noise_factored <- factor(noise_data$noise, 
@@ -60,9 +61,7 @@ ggplot(data=noise_data, aes(x=noise_factored, y=star, fill=state)) +
   guides(fill = guide_legend("Region"))
 
 # Focusing on attribute attire
-attire_data <- business %>% 
-  na.omit() %>% 
-  filter(state == "NV" | state == "AZ" | state == "NC" | state == "PA") %>% 
+attire_data <- big_cities %>% 
   group_by(state, attire) %>% 
   summarise(star = mean(stars))
 ggplot(data=attire_data, aes(x=attire, y=star, fill=state)) +
@@ -71,3 +70,4 @@ ggplot(data=attire_data, aes(x=attire, y=star, fill=state)) +
   xlab("Attire") + 
   ylab("Average Star Ratings") + 
   guides(fill = guide_legend("Region"))
+
