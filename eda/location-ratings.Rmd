@@ -1,0 +1,38 @@
+---
+title: "location-ratings"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(magrittr)
+library(ggmap)
+library(maps)
+library(jsonlite)
+```
+
+## User Reviews Are Influenced While Traveling
+
+I wanted to see if YELP users' review ratings change when they are traveling. This required 3 different data sets: business data, reviews data and user data. In order to select samples that can represent user trends, 15 users that have most number of reviews were selected. By selecting columns that I need for plots,  three different data tables are joined. After grouping by 'user' one location where users are most familiar with is selected and I decided to compare this location to all the other locations. I have ignored data table rows that have  same number of reviews for all cities. 
+
+```{r}
+user_reviews <- read_csv("user-reviews.csv")
+ggplot(user_reviews, aes(x = max_review,
+                         y = val)) +
+  geom_bar(stat = "identity", 
+           position = "dodge") + 
+  facet_wrap(~name) + 
+  labs(title = "Reviewers' Behavior Changes When In Unfamilar Locations") +
+  xlab("Location") + 
+  ylab("Star Ratings") +
+  scale_x_discrete(labels=c("Travelling", "Home"))
+  scale_x_discrete(labels=c("Travelling", "Home"))
+```
+
+## Plot
+
+Using 'facet_wrap', I was able to plot 11 different bar graphs per user. The second bar graph represents mean star rating for one city that the user wrote most reviews in. The first bar graph represents every other city the user has reviewed.
