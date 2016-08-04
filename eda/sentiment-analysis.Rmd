@@ -26,7 +26,7 @@ To see the full study, check out the paper found here: http://www2.imm.dtu.dk/pu
 
 I'll read in the first 500,000 observations of the Yelp reviewers data, which has been written to a csv file.
 ```{r}
-reviews <- read_csv("../clean_data/reviews.csv")
+reviews <- read_csv("../clean_data/yelp_reviews.csv")
 ```
 
 Now to apply this sentiment analysis to the Yelp review dataset, I have to mutate the data so that each word for every review exists in one row. I also need to remove stop words like "the", "and", "I", etc. since they don't indicate anything about the attitude of the reviewer and shouldn't affect the valence score. A library called __tm__ for text mining can eliminate stop words.
