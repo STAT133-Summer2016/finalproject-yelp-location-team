@@ -125,6 +125,7 @@ $(document).ready(function () {
 <pre class="r"><code>us_business &lt;- read_csv('us-business.csv')
 noise_level &lt;- read_csv('noise-attr.csv') 
 attire_type &lt;- read_csv('attire-attr.csv')
+
 states &lt;- map_data('state')
 ggplot(states) + 
   geom_polygon(aes(x = long, 

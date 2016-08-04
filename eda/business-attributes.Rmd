@@ -23,6 +23,7 @@ Among 70k+ businesses registered on Yelp, I wanted to figure out more about what
 us_business <- read_csv('us-business.csv')
 noise_level <- read_csv('noise-attr.csv') 
 attire_type <- read_csv('attire-attr.csv')
+
 states <- map_data('state')
 ggplot(states) + 
   geom_polygon(aes(x = long, 
