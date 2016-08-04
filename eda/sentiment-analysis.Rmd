@@ -12,6 +12,7 @@ library(jsonlite)
 library(stringr)
 library(ggplot2)
 library(dplyr)
+library(tidytext)
 library(tm)
 ```
 
@@ -48,8 +49,29 @@ head(review_words, n = 5)
 Too slow. I'll try the library __tidytext__. This library also let's me generate valence scores using the AFINN library without having to write an unnecessarily long function. 
 
 ```{r, eval = T}
-# moved all tidy procedures to CleanData.R
-review_scores <- read_csv("../clean_data/review_scores.csv")
+# unnest_tokens splits column into tokens using tokenizers package
+# splits "text" column into individual words to analyze sentiment for further
+# exploration
+reviews_text <- reviews %>% 
+  select(business_id, review_id, stars, text) %>%
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>% 
+  arrange(review_id)
+
+# rank words from -5 (negativity) to 5 (positivity) using AFINN lexicon
+# sentiments: 
+#   data frame with 4 variables: word, sentiment, lexicon, score
+# lexicon can be "nrc", "bing", or "AFINN"
+valence_score <- sentiments %>% 
+  filter(lexicon == "AFINN") %>% 
+  select(word, score)
+
+# calculate mean for each group of stars
+# Tidied csv: review_id, star rating, average sentiment score
+review_scores <- reviews_text %>% 
+  inner_join(valence_score, by = "word") %>% 
+  group_by(review_id, stars) %>% 
+  summarise(sentiment = mean(score))
 ```
 
 Pretty fast. I'll stick to this library and generate five box-plots to see if there's a positive correlation between mean sentiment score and restaurant rating.
@@ -65,15 +87,34 @@ ggplot(review_scores) +
 ```
 
 Positive correlation exists! Some inaccuracy (outliers on boxplots). Find out most common positive and negative words in reviews, creating a summary of the counts.
+```{r}
+# create summary of words and their average sentiment score in each unique
+# review and filter for >= 500 reviews and >= 10 businesses
+# Tidied csv: word, # of businesses word appears, # of reviews word appears,
+# # of different uses of word, average stars of word
+review_words <- reviews_text %>% 
+  count(review_id, business_id, stars, word) %>% 
+  ungroup()
+summaries <- review_words %>% 
+  group_by(word) %>% 
+  summarise(business = n_distinct(business_id),
+            reviews = n(),
+            use = sum(n),
+            average_star = mean(stars)) %>% 
+  ungroup() %>% 
+  filter(reviews >= 500, business >= 10) %>% 
+  inner_join(valence_score, by = "word")
+head(summaries, n = 10)
+```
 
-```{r fig.width = 8}
-summaries <- read_csv("../clean_data/summaries.csv")
 
+```{r fig.height = 7, fig.width = 7}
 summaries %>% 
   ggplot(aes(reviews, average_star, color = score)) +
   geom_point() +
   geom_text(aes(label = word), check_overlap = TRUE, vjust = 1, hjust = 1) +
-  scale_x_log10() +
+  scale_x_log10(limits = c(200, 100000), 
+                breaks = c(1000, 10000), labels = c(1000, 10000)) +
   geom_hline(yintercept = mean(reviews$stars), color = "black", lty = 2) +
   scale_color_gradient2(low = "red", high = "blue", midpoint = 0, mid = "gray") +
   labs(x = "# of reviews",
