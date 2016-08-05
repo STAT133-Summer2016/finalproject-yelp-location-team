@@ -19,66 +19,57 @@ library(jsonlite)
 
 Among 70k+ businesses registered on Yelp, I wanted to figure out more about what makes a business successful. Before investigating deeper, I decided to look at businesses that has 300+ reviews on Yelp by users in order to get more objective ratings of the business. I filtered the data set to get rid of closed businesses, businesses outside of US and limited the business type to restaurants. 
 
-```{r}
-us_business <- read_csv('us-business.csv')
-noise_level <- read_csv('noise-attr.csv') 
-attire_type <- read_csv('attire-attr.csv')
+There were only six states that have businesses reviewed more than 300 times. 
 
-states <- map_data('state')
-ggplot(states) + 
-  geom_polygon(aes(x = long, 
-                   y = lat, 
-                   group = group), 
-               fill = "grey80", 
-               color = "white") + 
-  coord_fixed(1.3) + 
-  geom_point(data = us_business, 
-             aes(long, 
-                 lat, 
-                 color = factor(stars), 
-                 size = count), 
-             alpha = 0.7) + 
-  guides(colour = guide_legend("Star Rating"), 
-         size = guide_legend("Review Counts")) + 
-  labs(title = "Restaurant Reviews in United States") +
-  theme_nothing(legend = TRUE)
+```{r}
+business <- read_csv("../clean_data/yelp_business.csv")
 ```
 
-## Exploring Noise Level 
-
-As expected, restaurants with many reviews and/or high ratings were clustered in specific regions. This table shows where most restaurants are clustered around. I have chosen 4 regions with most businesses: Nevada, Arizona, North Carolina and Pennsylvania.
-
 ```{r}
-top_data <- us_business %>% 
+successful_business <- business %>% 
+  select(-open) %>% 
+  filter(review_count > 300) %>% 
   group_by(state) %>% 
-  tally()
-top_data
-```
+  summarise(num = n())
 
-There were many attributes per restaurant, and some were more influential directly/indirectly to a business' success. I have first decided to see how noise level would influcence the star ratings of customers. 
-I grouped the data frame by 'state' and 'noise' and created a new column having the average star rating per group. The plot didn't know which noise level to plot first, so I have created the factor levels in noise level.
+names(business) <- c("id", "open", "categories", "count", "state", "stars", "noise", "attire", "Take-out", "Takes Reservation", "Offers Delivery", "Outdoor Seating", "Accepts Credit Card", "Happy Hour")
 
-```{r}
-ggplot(data=noise_level, aes(x = noise_factored,
-                            y = star, 
-                            fill = state)) +
+ggplot(successful_business, aes(x = reorder(state, -num), 
+                                y= num)) + 
   geom_bar(stat = "identity", 
            position = "dodge") +
-  scale_x_discrete(labels = c("Quiet", "Average", "Loud", "Very Loud")) +
-  labs(title = "How Noise Level Influences Average Star Ratings") + 
-  xlab("Noise Level") + 
-  ylab("Average Star Ratings") +
-  guides(fill = guide_legend("Region"))
+  labs(title = "Number of Businesses with more than 300 Reviews") + 
+  xlab("State") + 
+  ylab("Number of Businesses") 
 ```
 
-## Exploring Attire Types
-Now to another business attribute: attire. Similar to noise data, attire_data was retrived by grouping the data frame by 'state' and 'attire'. Again, the star ratings were the means of each group's star ratings. 
+## Exploring Attributes 
+
+As expected, restaurants with many reviews and/or high ratings were clustered in specific regions. 
 
 ```{r}
-ggplot(data=attire_type, aes(x=attire, y=star, fill=state)) +
-  geom_bar(stat="identity", position = "dodge") +
-  labs(title = "How Attire Influences Average Star Ratings") + 
-  xlab("Attire") + 
-  ylab("Average Star Ratings") + 
-  guides(fill = guide_legend("Region"))
+business_attributes <- business %>% 
+  filter(count > 300) %>% 
+  select(-open, -count, -categories, -noise, -attire) %>% 
+  gather(key=Attribute, value=Val, -id, -state, -stars) %>% 
+  na.omit
+```
+
+There were many attributes per restaurant, and some of them were believed to be influential to a business' success. I have first chosen six main attributes that seemed critical to the customers' star ratings. 
+
+I gathered all the attributes and used facet_wrap to plot six seperate graphs. The left chunk represents True and the right represents False. There are some states where there's no applicable values for the specific attribute.
+
+```{r}
+ggplot(business_attributes, 
+       aes(x = factor(Val, 
+                      levels = c("TRUE","FALSE")), 
+           y = stars, 
+           fill = state)) + 
+  facet_wrap(~Attribute) + 
+  geom_bar(stat = "identity",
+           position = "dodge") +
+  labs(title = "User Ratings on Business Attributes") +
+  xlab("") + 
+  ylab("Star Rating") +
+  scale_fill_discrete(name = "State")
 ```
