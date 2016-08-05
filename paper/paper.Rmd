@@ -1,0 +1,88 @@
+---
+title: "Final Paper"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(magrittr)
+library(ggmap)
+library(maps)
+```
+
+## Introduction
+
+introduction here
+
+
+## Using Yelp Data
+
+The yelp data set \url{http://www.sharelatex.com} consists of information about Yelp users, reviews they wrote and business information. 
+
+## Review Clusters in the US
+
+```{r, echo=FALSE}
+us_business <- read_csv('us-business.csv')
+noise_level <- read_csv('noise-attr.csv') 
+attire_type <- read_csv('attire-attr.csv')
+states <- map_data('state')
+ggplot(states) + 
+  geom_polygon(aes(x = long, 
+                   y = lat, 
+                   group = group), 
+               fill = "grey80", 
+               color = "white") + 
+  coord_fixed(1.3) + 
+  geom_point(data = us_business, 
+             aes(long, 
+                 lat, 
+                 color = factor(stars), 
+                 size = count), 
+             alpha = 0.7) + 
+  guides(colour = guide_legend("Star Rating"), 
+         size = guide_legend("Review Counts")) + 
+  labs(title = "Restaurant Reviews in United States") +
+  theme_nothing(legend = TRUE)
+```
+
+## Looking at attributes of businesses
+```{r, echo=FALSE}
+# Noise Level
+ggplot(data=noise_level, aes(x = noise_factored,
+                            y = star, 
+                            fill = state)) +
+  geom_bar(stat = "identity", 
+           position = "dodge") +
+  scale_x_discrete(labels = c("Quiet", "Average", "Loud", "Very Loud")) +
+  labs(title = "How Noise Level Influences Average Star Ratings") + 
+  xlab("Noise Level") + 
+  ylab("Average Star Ratings") +
+  guides(fill = guide_legend("Region"))
+
+# Attire type
+ggplot(data=attire_type, aes(x=attire, y=star, fill=state)) +
+  geom_bar(stat="identity", position = "dodge") +
+  labs(title = "How Attire Influences Average Star Ratings") + 
+  xlab("Attire") + 
+  ylab("Average Star Ratings") + 
+  guides(fill = guide_legend("Region"))
+
+```
+
+```{r, echo=FALSE}
+user_reviews <- read_csv("../clean_data/user-reviews.csv")
+ggplot(user_reviews, aes(x = max_review,
+                         y = val)) +
+  geom_bar(stat = "identity", 
+           position = "dodge") + 
+  facet_wrap(~name) + 
+  labs(title = "Reviewers' Behavior Changes When In Unfamilar Locations") +
+  xlab("Location") + 
+  ylab("Star Ratings") +
+  scale_x_discrete(labels=c("Travelling", "Home"))
+  scale_x_discrete(labels=c("Travelling", "Home"))
+```

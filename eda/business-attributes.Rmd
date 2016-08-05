@@ -20,9 +20,10 @@ library(jsonlite)
 Among 70k+ businesses registered on Yelp, I wanted to figure out more about what makes a business successful. Before investigating deeper, I decided to look at businesses that has 300+ reviews on Yelp by users in order to get more objective ratings of the business. I filtered the data set to get rid of closed businesses, businesses outside of US and limited the business type to restaurants. 
 
 ```{r}
-us_business <- read_csv('../clean_data/us-business.csv')
-noise_level <- read_csv('../clean_data/noise-attr.csv')
-attire_type <- read_csv('../clean_data/attire-attr.csv')
+us_business <- read_csv('us-business.csv')
+noise_level <- read_csv('noise-attr.csv') 
+attire_type <- read_csv('attire-attr.csv')
+
 states <- map_data('state')
 ggplot(states) + 
   geom_polygon(aes(x = long, 
