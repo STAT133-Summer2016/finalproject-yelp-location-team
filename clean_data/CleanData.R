@@ -4,9 +4,11 @@ library(readr)
 
 # Read in raw data convert to data frames
 business <- fromJSON(sprintf("[%s]", 
-                             paste(read_lines("../raw_data/yelp_academic_dataset_business.json"), 
-                                   collapse = ","))) %>% 
+                     paste(read_lines(
+                       "../raw_data/yelp_academic_dataset_business.json"), 
+                     collapse = ","))) %>% 
   flatten() %>% 
+  data.frame() %>% 
   select(business_id, open, categories, review_count, state, stars, 
          `attributes.Noise Level`, `attributes.Attire`, `attributes.Take-out`,
          `attributes.Takes Reservations`, `attributes.Delivery`,
