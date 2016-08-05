@@ -9,15 +9,13 @@ library(maps)
 library(jsonlite)
 
 review <- fromJSON(sprintf("[%s]", 
-                           paste(read_lines("yelp_academic_dataset_review.json", 
-                                            n_max = 1500000), 
+                           paste(readLines("yelp_academic_dataset_review.json"), 
                                  collapse = ","))) %>% 
   select(user_id, review_id, stars, business_id)
 
 
 user <- fromJSON(sprintf("[%s]", 
-                         paste(read_lines("yelp_academic_dataset_user.json",
-                                          n_max = 100000), 
+                         paste(read_lines("yelp_academic_dataset_user.json"), 
                                collapse = ",")))
 
 business_location <- fromJSON(sprintf("[%s]", 
@@ -36,7 +34,7 @@ user_reviews <- left_join(user, review) %>%
 u <- group_by(user_reviews, user_id, city) %>% 
   tally()
 
-max_reviews <- aggregate(n ~ user_id, u, max) %>% 
+max_reviews <- aggregate(n ~ user_id, familiar_location, max) %>% 
   left_join(u) %>% 
   select(-n) %>% 
   mutate(max_review=TRUE)

@@ -1,5 +1,6 @@
 ---
-title: "location-ratings"
+title: "Location Ratings"
+author: "Irene Lee"
 output: html_document
 ---
 
@@ -17,18 +18,22 @@ library(jsonlite)
 
 ## User Reviews Are Influenced While Traveling
 
-I wanted to see if YELP users' review ratings change when they are traveling. This required 3 different data sets: business data, reviews data and user data. 
+I wanted to see if YELP users' review ratings change when they are traveling. This required 3 different data sets: business data, reviews data and user data. I read three csv's that had previously been created. 
 ```{r}
 users <- read_csv("../clean_data/yelp_users.csv")
 business <- read_csv("../clean_data/yelp_business.csv")
 reviews <- read_csv("../clean_data/yelp_reviews.csv")
 ```
 
-In order to select samples that can represent user trends, 15 users that have most number of reviews were selected. By selecting columns that I need for plots,  three different data tables are joined. After grouping by 'user' one location where users are most familiar with is selected and I decided to compare this location to all the other locations. I have ignored data table rows that have  same number of reviews for all cities. 
+In order to show a good representation of user trends, I have chosen users that have left more than 50 reviews in total. I have joined three tables, selected users(review counts over 50), reviews and business locations. 
+
+Since I was using an academic data set provided by Yelp, it only contained some amount of user reviews. I have filtered the users to those with more than 10 reviews in the actual data set provided. I also added a column named 'most_reviewed' which will be true for one state that the user has left most reviews in (the state the user is most familiar with).
+
+The final data set was produced by combining everything above with users' average star rating per state. 
 
 ```{r}
 selected_users <- users %>% 
-  filter(review_count > 100) %>% 
+  filter(review_count > 50) %>% 
   select(name, user_id, review_count)
 
 user_reviews <- reviews %>% 
@@ -44,19 +49,35 @@ user_reviews <- left_join(selected_users, user_reviews) %>%
 familiar_location <- group_by(user_reviews, user_id, state) %>% 
   tally()
 
-location_reviews <- aggregate(n ~ user_id, familiar_location, max) %>% 
-  select(-n) %>% 
+location_reviews <- aggregate(n ~ user_id, familiar_location, max) %>%
   left_join(familiar_location) %>% 
-  mutate(max_review = TRUE)
+  mutate(most_reviewed = TRUE) %>% 
+  filter(n > 10) %>% 
+  select(-n)
 
 user_reviews <- left_join(user_reviews, location_reviews) 
 user_reviews[is.na(user_reviews)] <- FALSE
 
-true_r <- filter(user_reviews, max_review == TRUE)
+# average stars for unfamiliar/familiar area for a user
+avg_star_reviews <- user_reviews %>% 
+  group_by(user_id, most_reviewed) %>% 
+  summarise(avg_star = mean(stars))
 
-ggplot() +
 ```
 
 ## Plot
 
-Using 'facet_wrap', I was able to plot 11 different bar graphs per user. The second bar graph represents mean star rating for one city that the user wrote most reviews in. The first bar graph represents every other city the user has reviewed.
+The plot has two histograms, one with user ratings on familiar places and another on unfamiliar places. There is a quite noticeable differences between the two overlayed histograms. The data is extracted from more than 2 million reviews by users, so it for sure represents the .
+
+```{r}
+ggplot(avg_star_reviews, aes(x = avg_star, 
+              fill = most_reviewed)) + 
+  geom_density(alpha = 0.5,
+               color = NA) +
+  labs(title = "Reviewers' Behavior Changes When In Unfamilar Locations") +
+  xlab("Average Star Ratings") + 
+  ylab("Density") +
+  scale_fill_manual(name ="Regions",
+                    values = c("blue", "red"),
+                    labels = c("Familiar", "Unfamiliar"))
+```
