@@ -4,11 +4,16 @@ library(readr)
 
 # Read in raw data convert to data frames
 business <- fromJSON(sprintf("[%s]", 
-                     paste(read_lines(
-                       "../raw_data/yelp_academic_dataset_business.json"), 
-                     collapse = ","))) %>% 
+                             paste(read_lines("yelp_academic_dataset_business.json"), 
+                                   collapse = ","))) %>% 
   flatten() %>% 
-  tbl_df()
+  select(business_id, open, categories, review_count, state, stars, 
+         `attributes.Noise Level`, `attributes.Attire`, `attributes.Take-out`,
+         `attributes.Takes Reservations`, `attributes.Delivery`,
+         `attributes.Outdoor Seating`, `attributes.Accepts Credit Cards`,
+         `attributes.Happy Hour`) %>% 
+  filter(open == TRUE, "Restaurants" %in% categories, state %in% state.abb)
+business <- data.frame(lapply(business, as.character), stringsAsFactors=FALSE)
 
 reviews <- fromJSON(sprintf("[%s]", 
                     paste(read_lines(
@@ -19,10 +24,11 @@ reviews <- fromJSON(sprintf("[%s]",
 
 users <- fromJSON(sprintf("[%s]", 
                   paste(read_lines(
-                    "../raw_data/yelp_academic_dataset_user.json"), 
+                    "yelp_academic_dataset_user.json"), 
                   collapse = ","))) %>% 
   flatten() %>% 
   tbl_df()
+users <- data.frame(lapply(users, as.character), stringsAsFactors=FALSE)
 
 # Write data-frames to csvs
 write_csv(business, "yelp_business.csv")

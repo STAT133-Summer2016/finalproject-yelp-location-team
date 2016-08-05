@@ -17,20 +17,44 @@ library(jsonlite)
 
 ## User Reviews Are Influenced While Traveling
 
-I wanted to see if YELP users' review ratings change when they are traveling. This required 3 different data sets: business data, reviews data and user data. In order to select samples that can represent user trends, 15 users that have most number of reviews were selected. By selecting columns that I need for plots,  three different data tables are joined. After grouping by 'user' one location where users are most familiar with is selected and I decided to compare this location to all the other locations. I have ignored data table rows that have  same number of reviews for all cities. 
+I wanted to see if YELP users' review ratings change when they are traveling. This required 3 different data sets: business data, reviews data and user data. 
+```{r}
+users <- read_csv("../clean_data/yelp_users.csv")
+business <- read_csv("../clean_data/yelp_business.csv")
+reviews <- read_csv("../clean_data/yelp_reviews.csv")
+```
+
+In order to select samples that can represent user trends, 15 users that have most number of reviews were selected. By selecting columns that I need for plots,  three different data tables are joined. After grouping by 'user' one location where users are most familiar with is selected and I decided to compare this location to all the other locations. I have ignored data table rows that have  same number of reviews for all cities. 
 
 ```{r}
-user_reviews <- read_csv("../clean_data/user-reviews.csv")
-ggplot(user_reviews, aes(x = max_review,
-                         y = val)) +
-  geom_bar(stat = "identity", 
-           position = "dodge") + 
-  facet_wrap(~name) + 
-  labs(title = "Reviewers' Behavior Changes When In Unfamilar Locations") +
-  xlab("Location") + 
-  ylab("Star Ratings") +
-  scale_x_discrete(labels=c("Travelling", "Home"))
-  scale_x_discrete(labels=c("Travelling", "Home"))
+selected_users <- users %>% 
+  filter(review_count > 100) %>% 
+  select(name, user_id, review_count)
+
+user_reviews <- reviews %>% 
+  select(user_id, review_id, stars, business_id) 
+  
+business_locations <- business %>% 
+  select(business_id, state)
+
+user_reviews <- left_join(selected_users, user_reviews) %>% 
+  left_join(business_locations) %>% 
+  na.omit
+
+familiar_location <- group_by(user_reviews, user_id, state) %>% 
+  tally()
+
+location_reviews <- aggregate(n ~ user_id, familiar_location, max) %>% 
+  select(-n) %>% 
+  left_join(familiar_location) %>% 
+  mutate(max_review = TRUE)
+
+user_reviews <- left_join(user_reviews, location_reviews) 
+user_reviews[is.na(user_reviews)] <- FALSE
+
+true_r <- filter(user_reviews, max_review == TRUE)
+
+ggplot() +
 ```
 
 ## Plot
