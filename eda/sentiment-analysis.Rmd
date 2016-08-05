@@ -18,7 +18,7 @@ library(tm)
 
 ## Sentiment Analysis on Text Reviews for Yelp
 
-Sentiment analysis, or opinion mining, makes use of natural language processing to analyze pieces of text and determine the attitude of the speaker or writer. In order to find relevant lexicons to explore this topic with the Yelp review data, I researched different lexicons and found ANEW (Affective Norms for English Words), a "sentiment lexcion" that scores words for valence. 
+Sentiment analysis, or opinion mining, makes use of natural language processing to analyze pieces of text and determine the attitude of the speaker or writer. I researched different lexicons and found ANEW (Affective Norms for English Words), a "sentiment lexcion" that scores words for valence. 
 
 However, upon further research, I came across an article written by Finn ˚Arup Nielsen, where he compares a sentiment lexicon he created to ANEW. His list, AFINN, contains a list of English words and assigns an integer from -5 (negative) to +5 (positive) to each word based on its sentiment. He concluded that his word list better classifies sentiment rating than ANEW on Twitter sentiment analysis. Since Yelp ratings are similar to tweets, I'll use AFINN for this exploration. 
 
@@ -88,12 +88,12 @@ ggplot(review_scores) +
   theme_bw()
 ```
 
-Positive correlation exists! Some inaccuracy (outliers on boxplots). Find out most common positive and negative words in reviews, creating a summary of the counts.
+Positive correlation exists! Some inaccuracy (outliers on boxplots). Find out most common positive and negative words in reviews, creating a summary of the counts. I filtered for greater than 500 reviews and 10 business so they're not unique words to a local business or rare words with strange sentiments.
 ```{r}
 # create summary of words and their average sentiment score in each unique
 # review and filter for >= 500 reviews and >= 10 businesses
 # Tidied csv: word, # of businesses word appears, # of reviews word appears,
-# # of different uses of word, average stars of word
+# average stars of word
 review_words <- reviews_text %>% 
   count(review_id, business_id, stars, word) %>% 
   ungroup()
@@ -101,7 +101,6 @@ summaries <- review_words %>%
   group_by(word) %>% 
   summarise(business = n_distinct(business_id),
             reviews = n(),
-            use = sum(n),
             average_star = mean(stars)) %>% 
   ungroup() %>% 
   filter(reviews >= 500, business >= 10) %>% 
@@ -109,7 +108,8 @@ summaries <- review_words %>%
 head(summaries, n = 10)
 ```
 
-Below, I'll plot word frequency vs 
+Now, I'll plot word average star rating vs. word frequency to see what words scored positive ratings. I'll also color by AFINN score to visualize inaccuracies and determine how well they were classified using the mean star rating of all reviews as a baseline metric.
+
 ```{r fig.height = 7, fig.width = 7}
 summaries %>% 
   ggplot(aes(reviews, average_star, color = score)) +
@@ -123,4 +123,27 @@ summaries %>%
        y = "Average Stars",
        color = "AFINN") +
   theme_bw()
+```
+Blue words mostly lie above the line and red words lie below so reveiw text is a pretty good predictor of business rating. Let's see how accurate it was.
+
+```{r}
+positive <- summaries %>% 
+  filter(score > 0)
+negative <- summaries %>% 
+  filter(score < 0)
+above <- positive %>% 
+  filter(average_star >= mean(reviews$stars))
+below <- negative %>% 
+  filter(average_star <= mean(reviews$stars))
+percent_pos <- nrow(above) / nrow(positive)
+percent_neg <- nrow(below) / nrow(negative)
+print(str_c("Positivity Accuracy: ", percent_pos))
+print(str_c("Negativity Accuracy: ", percent_neg))
+```
+64.23% of positive words lie above the mean average rating! There's definitely a positive correlation between word positivity in text reviews and Yelp business star ratings. Word negativity is even better at 87.24% accuracy of negative words lying below the mean average rating. 
+
+What's the accuracy for words that are +5 or -5? Do they lead to 5-star ratings?
+```{r}
+pos_five <- summaries %>% filter(score == 5)
+neg_five <- summaries %>% filter(score == -5)
 ```
