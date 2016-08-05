@@ -8,7 +8,7 @@ business <- fromJSON(sprintf("[%s]",
                        "../raw_data/yelp_academic_dataset_business.json"), 
                      collapse = ","))) %>% 
   flatten() %>% 
-  tbl_df()
+  data.frame()
 
 reviews <- fromJSON(sprintf("[%s]", 
                     paste(read_lines(
