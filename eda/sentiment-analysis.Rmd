@@ -14,6 +14,8 @@ library(ggplot2)
 library(dplyr)
 library(tidytext)
 library(tm)
+library(ggrepel)
+source("../functions/PercentAccuracy.R")
 ```
 
 ## Sentiment Analysis on Text Reviews for Yelp
@@ -118,12 +120,15 @@ summaries %>%
   scale_x_log10(limits = c(200, 100000), 
                 breaks = c(1000, 10000), labels = c(1000, 10000)) +
   geom_hline(yintercept = mean(reviews$stars), color = "black", lty = 2) +
-  scale_color_gradient2(low = "red", high = "blue", midpoint = 0, mid = "gray") +
+  scale_color_gradient2(low = "red", high = "blue", 
+                        midpoint = 0, mid = "grey") +
   labs(x = "# of reviews",
-       y = "Average Stars",
-       color = "AFINN") +
+       y = "Average Yelp Stars",
+       color = "Valence Score") +
+  scale_y_continuous(limits = c(1, 5), breaks = seq(1, 5, 1)) +
   theme_bw()
 ```
+
 Blue words mostly lie above the line and red words lie below so reveiw text is a pretty good predictor of business rating. Let's see how accurate it was.
 
 ```{r}
@@ -131,19 +136,24 @@ positive <- summaries %>%
   filter(score > 0)
 negative <- summaries %>% 
   filter(score < 0)
-above <- positive %>% 
-  filter(average_star >= mean(reviews$stars))
-below <- negative %>% 
-  filter(average_star <= mean(reviews$stars))
-percent_pos <- nrow(above) / nrow(positive)
-percent_neg <- nrow(below) / nrow(negative)
+percent_pos <- PercentAccuracy(positive)
+percent_neg <- 1 - PercentAccuracy(negative)
 print(str_c("Positivity Accuracy: ", percent_pos))
 print(str_c("Negativity Accuracy: ", percent_neg))
 ```
-64.23% of positive words lie above the mean average rating! There's definitely a positive correlation between word positivity in text reviews and Yelp business star ratings. Word negativity is even better at 87.24% accuracy of negative words lying below the mean average rating. 
+64.23% of positive words lie above the mean average rating! There's definitely a positive correlation between word positivity in text reviews and Yelp business star ratings. Word negativity is even better at 87.24% accuracy of negative words lying below the mean average rating.
 
-What's the accuracy for words that are +5 or -5? Do they lead to 5-star ratings?
-```{r}
-pos_five <- summaries %>% filter(score == 5)
-neg_five <- summaries %>% filter(score == -5)
+```{r fig.height = 7}
+summaries %>% 
+  arrange(desc(reviews)) %>% 
+  ggplot(aes(score, average_star)) +
+  geom_point(aes(size = reviews)) +
+  geom_text(aes(label = word), vjust = 1, hjust = 1, check_overlap = TRUE) +
+  geom_smooth(method = "lm", se = FALSE) +
+  xlab("Valence Score") +
+  ylab("Average Yelp Stars") +
+  labs(title = "Average Yelp Star Rating vs. Valence Score") +
+  scale_x_continuous(limits = c(-5,6), breaks = seq(-5, 5, 2)) +
+  scale_y_continuous(limits = c(1, 5), breaks = seq(1, 5, 1)) +
+  expand_limits(x = -6)
 ```
