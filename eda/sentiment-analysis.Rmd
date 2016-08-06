@@ -62,6 +62,8 @@ reviews_text <- reviews %>%
   anti_join(stop_words) %>% 
   arrange(review_id)
 
+write_csv(reviews_text, "../clean_data/reviews_text.csv")
+
 # rank words from -5 (negativity) to 5 (positivity) using AFINN lexicon
 # sentiments: 
 #   data frame with 4 variables: word, sentiment, lexicon, score
