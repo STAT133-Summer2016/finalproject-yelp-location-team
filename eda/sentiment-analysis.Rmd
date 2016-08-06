@@ -88,8 +88,7 @@ ggplot(review_scores) +
   geom_boxplot(aes(stars, sentiment, group = stars)) +
   labs(x = "Business Star Rating",
        y = "Mean Sentiment Score",
-       title = "Mean Sentiment Score vs. Business Star Rating") +
-  theme_bw()
+       title = "Mean Sentiment Score vs. Business Star Rating")
 ```
 
 Positive correlation exists! Some inaccuracy (outliers on boxplots). Find out most common positive and negative words in reviews, creating a summary of the counts. I filtered for greater than 500 reviews and 10 business so they're not unique words to a local business or rare words with strange sentiments.
@@ -127,8 +126,7 @@ summaries %>%
   labs(x = "# of reviews",
        y = "Average Yelp Stars",
        color = "Valence Score") +
-  scale_y_continuous(limits = c(1, 5), breaks = seq(1, 5, 1)) +
-  theme_bw()
+  scale_y_continuous(limits = c(1, 5), breaks = seq(1, 5, 1))
 ```
 
 Blue words mostly lie above the line and red words lie below so reveiw text is a pretty good predictor of business rating. Let's see how accurate it was.
@@ -145,6 +143,7 @@ print(str_c("Negativity Accuracy: ", percent_neg))
 ```
 64.23% of positive words lie above the mean average rating! There's definitely a positive correlation between word positivity in text reviews and Yelp business star ratings. Word negativity is even better at 87.24% accuracy of negative words lying below the mean average rating.
 
+This is pretty informative, but I want to see these words plotted by their valence score and average Yelp rating to visualize if there's a positive correlation here between sentiment score and their star rating. 
 ```{r fig.height = 7}
 summaries %>% 
   arrange(desc(reviews)) %>% 
@@ -159,3 +158,5 @@ summaries %>%
   scale_y_continuous(limits = c(1, 5), breaks = seq(1, 5, 1)) +
   expand_limits(x = -6)
 ```
+
+Based on a simple linear regression line, words with higher scores are clustered towards 4 and 5-star ratings, while most negative words have pretty low average ratings. Some words like "damn" had higher star ratings despite their low AFINN score, but that could be explained by reviews where writers could have described their food or service as "damn good".
