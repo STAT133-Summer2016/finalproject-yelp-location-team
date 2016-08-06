@@ -1,3 +1,6 @@
+# Sentiment Analysis for Yelp Text Reviews
+# Using tidytext and AFINN lexicon, assign valence score to words in text reviews
+# to classify star ratings of Yelp businesses
 library(jsonlite)
 library(readr)
 library(httr)
