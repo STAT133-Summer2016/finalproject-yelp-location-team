@@ -59,7 +59,7 @@ There were many attributes per restaurant, and some of them were believed to be 
 
 I gathered all the attributes and used facet_wrap to plot six seperate graphs. The left chunk represents True and the right represents False. There are some states where there's no applicable values for the specific attribute.
 
-```{r}
+```{r, echo = FALSE}
 ggplot(business_attributes, 
        aes(x = factor(Val, 
                       levels = c("TRUE","FALSE")), 

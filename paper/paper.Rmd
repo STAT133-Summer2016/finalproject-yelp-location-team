@@ -21,68 +21,136 @@ introduction here
 
 ## Using Yelp Data
 
-The yelp data set \url{http://www.sharelatex.com} consists of information about Yelp users, reviews they wrote and business information. 
-
-## Review Clusters in the US
+The yelp data set (\url{https://www.yelp.com/dataset_challenge}) consists of information about Yelp users, reviews they wrote and business information. 
 
 ```{r, echo=FALSE}
-us_business <- read_csv('us-business.csv')
-noise_level <- read_csv('noise-attr.csv') 
-attire_type <- read_csv('attire-attr.csv')
-states <- map_data('state')
-ggplot(states) + 
-  geom_polygon(aes(x = long, 
-                   y = lat, 
-                   group = group), 
-               fill = "grey80", 
-               color = "white") + 
-  coord_fixed(1.3) + 
-  geom_point(data = us_business, 
-             aes(long, 
-                 lat, 
-                 color = factor(stars), 
-                 size = count), 
-             alpha = 0.7) + 
-  guides(colour = guide_legend("Star Rating"), 
-         size = guide_legend("Review Counts")) + 
-  labs(title = "Restaurant Reviews in United States") +
-  theme_nothing(legend = TRUE)
+users <- read_csv("../clean_data/yelp_users.csv")
+business <- read_csv("../clean_data/yelp_business.csv")
+reviews <- read_csv("../clean_data/yelp_reviews.csv")
 ```
 
-## Looking at attributes of businesses
+## Business Clusters in the US
+
+The business data set provided 77,445 rows of information such as review counts, ratings and locations of local businesses. After carefully looking at the data set, we have decided to filter out the more significant data by limiting it to businesses having more than 300 reviews in the US. 
+
+We have first tried to plot this information with points on a map.  Points with different sizes stacked up on each other and unexpectedly, the size and color of the points did not tell much information. Even though 900+ points were plotted, there were six clusters of points and there was no point of having so many individual points.
+
+Instead, we ended up with a bar graph, which clearly shows which state has the most number of businesses with over 300 reviews. There were 6 distinct regions in total. Interestingly, the graph shows that the majority of the businesses is located in two states: about 62% of the filtered businesses were clustered in Nevada area and another 31% was in Arizona. 
+
+We have hypothesized earlier that location will influence a business’ success. The plot shows 
+
+
 ```{r, echo=FALSE}
-# Noise Level
-ggplot(data=noise_level, aes(x = noise_factored,
-                            y = star, 
-                            fill = state)) +
+successful_business <- business %>% 
+  select(-open) %>% 
+  filter(review_count > 300) %>% 
+  group_by(state) %>% 
+  summarise(num = n())
+
+names(business) <- c("business_id", "open", "categories", "count", "state", "stars", "noise", "attire", "Take-out", "Takes Reservation", "Offers Delivery", "Outdoor Seating", "Accepts Credit Card", "Happy Hour")
+
+ggplot(successful_business, aes(x = reorder(state, -num), 
+                                y= num)) + 
   geom_bar(stat = "identity", 
            position = "dodge") +
-  scale_x_discrete(labels = c("Quiet", "Average", "Loud", "Very Loud")) +
-  labs(title = "How Noise Level Influences Average Star Ratings") + 
-  xlab("Noise Level") + 
-  ylab("Average Star Ratings") +
-  guides(fill = guide_legend("Region"))
-
-# Attire type
-ggplot(data=attire_type, aes(x=attire, y=star, fill=state)) +
-  geom_bar(stat="identity", position = "dodge") +
-  labs(title = "How Attire Influences Average Star Ratings") + 
-  xlab("Attire") + 
-  ylab("Average Star Ratings") + 
-  guides(fill = guide_legend("Region"))
+  labs(title = "Number of Businesses with more than 300 Reviews") + 
+  xlab("State") + 
+  ylab("Number of Businesses") 
 
 ```
 
-```{r, echo=FALSE}
-user_reviews <- read_csv("../clean_data/user-reviews.csv")
-ggplot(user_reviews, aes(x = max_review,
-                         y = val)) +
-  geom_bar(stat = "identity", 
-           position = "dodge") + 
-  facet_wrap(~name) + 
+## Business Attributes 
+
+Looking more into the data set, we wanted to know if certain attributes in specific regions make businesses stand out. The business data set is now cleaned and gathered in order to make each row contain one business attribute.
+
+We have first tried to include only two representative plots. However, subsetting too much of the data set made us lose many valuable information., It could also potentially lead to overgeneralization.
+
+We wanted to see if any of the attributes of the businesses makes them successful. Six major attributes were chosen among many. There were slight differences in some categories. For example, businesses that accept credit cards seem to have higher ratings compared to those that don't. There were no major findings from the plots, however.
+
+Except for slight differences in average ratings, there was no exceptional difference shown among the choices. The user review ratings were evenly spread out no matter the specific attribute exists or not. The result points out that business attributes do not have huge influences over user ratings.
+
+
+
+
+```{r, echo = FALSE}
+business_attributes <- business %>% 
+  filter(count > 300) %>% 
+  select(-open, -count, -categories, -noise, -attire) %>% 
+  gather(key=Attribute, value=Val, -business_id, -state, -stars) %>% 
+  na.omit
+```
+```{r, echo = FALSE}
+ggplot(business_attributes, 
+       aes(x = factor(Val, 
+                      levels = c("TRUE","FALSE")), 
+           y = stars, 
+           fill = state)) + 
+  facet_wrap(~Attribute) + 
+  geom_bar(stat = "identity",
+           position = "dodge") +
+  labs(title = "User Ratings on Business Attributes") +
+  xlab("") + 
+  ylab("Star Rating") +
+  scale_fill_discrete(name = "State")
+```
+
+## Users Behavior Changes When Travelling
+
+If business attributes do not impact business' success, then what would?
+
+From analyzing over 2 million reviews, we wanted to find out what would affect people's behavior of rating businesses. Since the data set given by Yelp was academic, this did not include every single review by every user in data. We have focused on active users that have written more than 50 reviews in total and have 10 reviews in the data provided at the same time. This seemed enough to analyze the user trends.
+
+First, we went with facet_wrap in plot after selecting top 15 influencers with most reviews. However, since facet focuses rather on individual data than overall trends, it was hard to generalize the findings. Some individual preferences were really different from others.
+
+Another approach we took was to plot everyone's ratings into the histograms. From the filtered user data set from above, one familiar region was chosen per user. This was based on where the user wrote most reviews. Two average star ratings were calculated for a user: one for reviews in familiar state and another from reviews when travelling unfamiliar places. The results are shown below in density curves. 
+
+At initial observation, the density curve for unfamiliar region is smooth and the majority of users tend to give star ratings in between 3 to 4.5 out of 5. Number of people giving 1 or 2 stars while traveling is barely seen. On the other hand, the ratings in familiar places were rather widely distributed. There were good amount of people giving star ratings from 1 through 5, even though the peak of the curve is around 4.
+
+Interestingly, the mean value of each place turned out to be 3.718 for unfamiliar and 3.762 for familiar places. However, the standard deviation for the familiar place plot is 0.41 and unfamiliar one is 1.37 so that star ratings for unfamiliar places looked higher at first.
+
+
+
+
+```{r, echo = FALSE}
+selected_users <- users %>% 
+  filter(review_count > 50) %>% 
+  select(name, user_id, review_count)
+
+user_reviews <- reviews %>% 
+  select(user_id, review_id, stars, business_id) 
+  
+business_locations <- business %>% 
+  select(business_id, state)
+
+user_reviews <- left_join(selected_users, user_reviews) %>% 
+  left_join(business_locations) %>% 
+  na.omit
+
+familiar_location <- group_by(user_reviews, user_id, state) %>% 
+  tally()
+
+location_reviews <- aggregate(n ~ user_id, familiar_location, max) %>%
+  left_join(familiar_location) %>% 
+  mutate(most_reviewed = TRUE) %>% 
+  filter(n > 10) %>% 
+  select(-n)
+
+user_reviews <- left_join(user_reviews, location_reviews) 
+user_reviews[is.na(user_reviews)] <- FALSE
+
+# average stars for unfamiliar/familiar area for a user
+avg_star_reviews <- user_reviews %>% 
+  group_by(user_id, most_reviewed) %>% 
+  summarise(avg_star = mean(stars))
+
+ggplot(avg_star_reviews, aes(x = avg_star, 
+              fill = most_reviewed)) + 
+  geom_density(alpha = 0.5,
+               color = NA) +
   labs(title = "Reviewers' Behavior Changes When In Unfamilar Locations") +
-  xlab("Location") + 
-  ylab("Star Ratings") +
-  scale_x_discrete(labels=c("Travelling", "Home"))
-  scale_x_discrete(labels=c("Travelling", "Home"))
+  xlab("Average Star Ratings") + 
+  ylab("Density") +
+  scale_fill_manual(name ="Regions",
+                    values = c("blue", "red"),
+                    labels = c("Familiar", "Unfamiliar"))
 ```
