@@ -14,8 +14,9 @@ library(ggplot2)
 library(dplyr)
 library(tidytext)
 library(tm)
-library(ggrepel)
+library(purrr)
 source("../functions/PercentAccuracy.R")
+source("../functions/MeanStar.R")
 ```
 
 ## Sentiment Analysis on Text Reviews for Yelp
@@ -50,11 +51,11 @@ corpus <- tm_map(corpus, function(x) removeWords(x,stopwords()))
 head(review_words, n = 5)
 ```
 
-Too slow. I'll try the library __tidytext__. This library also let's me generate valence scores using the AFINN library without having to write an unnecessarily long function. 
+Too slow. I'll try the library __tidytext__. This library also let's me generate valence scores using the AFINN library without mhaving to write an unnecessarily long function. 
 
 ```{r, eval = T}
 # unnest_tokens splits column into tokens using tokenizers package
-# splits "text" column into individual words to analyze sentiment for further
+# splits "text" column into individual words to nalyze sentiment for further
 # exploration
 reviews_text <- reviews %>% 
   select(business_id, review_id, stars, text) %>%
@@ -72,12 +73,13 @@ valence_score <- sentiments %>%
   filter(lexicon == "AFINN") %>% 
   select(word, score)
 
-# calculate mean for each group of stars
-# Tidied csv: review_id, star rating, average sentiment score
+# calculate mean for each review
+# Tidied: review_id, star rating, average sentiment score
 review_scores <- reviews_text %>% 
   inner_join(valence_score, by = "word") %>% 
   group_by(review_id, stars) %>% 
   summarise(sentiment = mean(score))
+write_csv(review_scores, "../clean_data/review_scores.csv")
 ```
 
 Pretty fast. I'll stick to this library and generate five box-plots to see if there's a positive correlation between mean sentiment score and restaurant rating.
@@ -95,7 +97,7 @@ Positive correlation exists! Some inaccuracy (outliers on boxplots). Find out mo
 ```{r}
 # create summary of words and their average sentiment score in each unique
 # review and filter for >= 500 reviews and >= 10 businesses
-# Tidied csv: word, # of businesses word appears, # of reviews word appears,
+# Tidied: word, # of businesses word appears, # of reviews word appears,
 # average stars of word
 review_words <- reviews_text %>% 
   count(review_id, business_id, stars, word) %>% 
@@ -109,6 +111,7 @@ summaries <- review_words %>%
   filter(reviews >= 500, business >= 10) %>% 
   inner_join(valence_score, by = "word")
 head(summaries, n = 10)
+write_csv(summaries, "../clean_data/summaries.csv")
 ```
 
 Now, I'll plot word average star rating vs. word frequency to see what words scored positive ratings. I'll also color by AFINN score to visualize inaccuracies and determine how well they were classified using the mean star rating of all reviews as a baseline metric.
@@ -141,7 +144,7 @@ percent_neg <- 1 - PercentAccuracy(negative)
 print(str_c("Positivity Accuracy: ", percent_pos))
 print(str_c("Negativity Accuracy: ", percent_neg))
 ```
-64.23% of positive words lie above the mean average rating! There's definitely a positive correlation between word positivity in text reviews and Yelp business star ratings. Word negativity is even better at 87.24% accuracy of negative words lying below the mean average rating.
+63.71% of positive words lie above the mean average rating! There's definitely a positive correlation between word positivity in text reviews and Yelp business star ratings. Word negativity is even better at 87.76% accuracy of negative words lying below the mean average rating.
 
 This is pretty informative, but I want to see these words plotted by their valence score and average Yelp rating to visualize if there's a positive correlation here between sentiment score and their star rating. 
 ```{r fig.height = 7}
@@ -160,3 +163,15 @@ summaries %>%
 ```
 
 Based on a simple linear regression line, words with higher scores are clustered towards 4 and 5-star ratings, while most negative words have pretty low average ratings. Some words like "damn" had higher star ratings despite their low AFINN score, but that could be explained by reviews where writers could have described their food or service as "damn good".
+
+```{r}
+data.frame(
+  x = factor(-5:5), 
+  y = unlist(-5:5 %>% map(MeanStar))) %>% 
+  filter(!is.nan(y)) %>% 
+  ggplot(aes(x = x, y = y, fill = x)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Valence Score",
+       y = "Average Star Rating",
+       fill = "Valence Score")
+```
