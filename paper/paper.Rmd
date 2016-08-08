@@ -97,7 +97,15 @@ Converting the raw data from JSON was quite easy using R libraries. We began by 
 
 ####Stage Two: Data Wrangling
 We began by filtering for businesses with more than 300 reviews in the United States. Looking more closely at the business dataset, we noticed a nested data-frame of attributes for each business, so we cleaned and gathered the data so that each row contained one business attribute. Business data set was used to see what makes a business popular and successful; especially by looking at where most-reviewed are clustered and the influence of major business attributes.
-
+```{r load, echo = FALSE}
+business <- read_csv("../clean_data/yelp_business.csv")
+names(business) <- c("business_id", "open", "categories", "count", "state", "stars", "noise", "attire", "Take-out", "Takes Reservation", "Offers Delivery", "Outdoor Seating", "Accepts Credit Card", "Happy Hour")
+successful_business <- business %>% 
+  select(-open) %>% 
+  filter(review_count > 300) %>% 
+  group_by(state) %>% 
+  summarise(num = n())
+```
 Review data was cleaned for sentiment analysis using a library called “tidytext”. After reading in the review dataset, we randomly sampled 500,000 observations. With this, we tokenized each word in a review into a single row in the data-frame and removed stop words like “a”, “and”, “the”, etc. since they had no indication of the reviewers’ attitudes. Using built-in lexicons, we assigned each word a valence score and computed the mean score for each review. Additionally, we created per-word summaries, computing the number of business and reviews the word appeared in and the average star rating based on each review. We filtered for words that appeared in more than 10 businesses and 500 reviews to exclude rare words with strange valence scores and ratings. Using these cleaned datasets, we were able to create visualizations and make inferences discussed later.
 
 ```{r load, echo = FALSE}
@@ -107,13 +115,54 @@ reviews <- reviews %>%
 ```
 
 Lastly, business data, user data and review data were all used to analyze the users’ behaviors when they are in unfamiliar places. User data was cleaned to filter for active users with a significant amount of reviews. Cleaned review data and business data were then joined together with user data. We created an additional boolean column called ‘most_reviewed’, after computing the most familiar location for a user (one state per user where most of his/her reviews reside). Using this, we cleaned up and created a new data frame with average star ratings of familiar places and unfamiliar places per user. In the next section, we discuss this further along with results. 
-
+```{r load, echo = FALSE}
+users <- read_csv("../clean_data/yelp_users.csv")
+reviews <- read_csv("../clean_data/yelp_reviews.csv")
+```
 ####Stage Three: Pre-Processing using ‘tidytext’ for Sentiment Analysis
 Sentiment analysis, or opinion mining, makes use of natural language processing to analyze pieces of text and determine the attitude of the speaker or writer. To perform sentiment analysis, we researched various text mining libraries. First, _tm_ was used to remove stop words, common English words that would give no information, but the process of splitting text reviews into one word-per-row and removing stop words was too inefficient. After more research, we came across “tidytext”, a library for text mining. Using this library, cleaning and aggregating the review data was extremely easy and efficient. We then performed tidy analysis to strip reviews and tokenize each word into a single row in the data-frame.
 
 To explore this data, we researched different lexicons and found ANEW (Affective Norms for English Words), a "sentiment lexicon" that scores words for valence. However, upon further research, we came across an article written by Finn Arup Nielsen, where he compares a sentiment lexicon he created to ANEW. His lexicon, AFINN, contains a list of English words that are assigned an integer value from -5 (negative) to +5 (positive) based on the word’s sentiment. He concluded that his word list better classifies sentiment rating than ANEW on Twitter sentiment analysis. Since Yelp text reviews are similar to tweets, we used AFINN for this sentiment analysis. 
 
 ##Results and Discussion
+
+####A. Location and Business Attributes Analysis
+
+Our first hypothesis was that successful businesses would be clustered at certain points. We first tried to plot this information with points on a map using longitude and latitude of the businesses.  Points with different sizes stacked up on each other and unexpectedly, and the size and color of the points did not tell much information. Even though 900+ points were plotted, there were six primary clusters of points and there was no point in having so many individual points.
+
+Instead, we ended up with a bar graph, which clearly shows which state has the most number of businesses with over 300 reviews. There were 6 distinct regions in total. Interestingly, the graph shows that the majority of the businesses is located in two states: about 62% of the filtered businesses were located in Nevada and another 31% was in Arizona. 
+```{r, echo = FALSE}
+ggplot(successful_business, aes(x = reorder(state, -num), 
+                                y= num)) + 
+  geom_bar(stat = "identity", 
+           position = "dodge") +
+  labs(title = "Number of Businesses with more than 300 Reviews") + 
+  xlab("State") + 
+  ylab("Number of Businesses") 
+```
+We also hypothesized that there would be business attributes that help business to succeed in terms of number of reviews and ratings. We first tried to include two representative plots, ‘Noise Level’ and ‘Attire Type’. However, subsetting too much of the data set made us lose valuable information about the dataset. Choosing only two random attributes and analyzing was too narrow an exploration of the data.
+
+As such, six major attributes were chosen. There were slight differences in star ratings based on some categories. For example, businesses that accept credit cards seemed to have higher ratings compared to those that don't. Interestingly, restaurants that do not offer delivery showed slightly higher star ratings than those who do. There were no major findings from the plots, however. Except for slight differences in average ratings of certain attributes, there was no significant difference evident. The user review ratings were evenly spread out even if the specific attribute existed or not. Our findings pointed out that business attributes do not have huge influences over user ratings.
+```{r, echo = FALSE}
+business_attributes <- business %>% 
+filter(count > 300) %>% 
+select(-open, -count, -categories, -noise, -attire) %>% 
+gather(key=Attribute, value=Val, -business_id, -state, -stars) %>% 
+na.omit
+
+ggplot(business_attributes, 
+aes(x = factor(Val, 
+levels = c("TRUE","FALSE")), 
+y = stars, 
+fill = state)) + 
+facet_wrap(~Attribute) + 
+geom_bar(stat = "identity",
+position = "dodge") +
+labs(title = "User Ratings on Business Attributes") +
+xlab("") + 
+ylab("Star Rating") +
+scale_fill_discrete(name = "State")
+```
 ####B. Sentiment Analysis
 We hypothesized that words with higher valence scores would produce higher Yelp star ratings for businesses. First, using the R library “wordcloud”, we formed two word clouds for the 100 most frequent words in text reviews with one-star and five-star ratings to determine if there was a distinct difference between the words used.
 
@@ -182,6 +231,7 @@ print(str_c("Positivity Accuracy: ", percent_pos))
 print(str_c("Negativity Accuracy: ", percent_neg))
 ```
 
+
 For the most part, our classifier was accurate. 65.02% of positive words sampled lied above the mean restaurant rating, and even better, 86.99% of negative words lied below the mean star rating. Therefore, it seems reasonable to infer that there is indeed a positive correlation between valence score and Yelp business rating.
 
 However, we also wanted to see these words plotted by their valence score versus average star rating to visualize the actual trend between sentiment and rating, rather than just viewing what percentage of words lied above the mean rating.
@@ -220,4 +270,66 @@ data.frame(
   theme(text = element_text(family = "Times New Roman"))
 ```
 
+<<<<<<< HEAD
 As expected, higher AFINN scores did in fact result in higher mean business ratings. Interestingly, words with a -5 AFINN rating had a higher rating than words with a -4 and -3 AFINN rating. We're not exactly sure what would've caused this, but it seems like an interesting thing to explore for further research. 
+=======
+As expected, higher AFINN scores did in fact result in higher mean business ratings.
+
+####C. User Behavior Analysis
+
+From analyzing over 2 million reviews, we wanted to find out what would affect people's behavior of rating businesses. Since the data set given by Yelp was academic, this did not include every single review by every user in data. We have focused on active users that have written more than 50 reviews in total and have 10 reviews in the data provided at the same time. This seemed enough to analyze the user trends.
+
+We have hypothesized that users would give relatively higher star ratings than when visiting local restaurants that they are familiar with.
+
+First, we went with facet_wrap in plot after selecting top 15 influencers with most reviews. However, since facet focuses rather on individual data than overall trends, it was hard to generalize the findings. Some individual preferences were really different from others.
+
+Another approach we took was to plot everyone's ratings into the histograms. From the filtered user data set from above, one familiar region was chosen per user. This was based on where the user wrote most reviews. Two average star ratings were calculated for a user: one for reviews in familiar state and another from reviews when travelling unfamiliar places. The results are shown below in density curves. 
+
+At initial observation, the density curve for unfamiliar region is smooth and the majority of users tend to give star ratings in between 3 to 4.5 out of 5. Number of people giving 1 or 2 stars while traveling is barely seen. On the other hand, the ratings in familiar places were rather widely distributed. There were good amount of people giving star ratings from 1 through 5, even though the peak of the curve is around 4.
+
+Interestingly, the mean value of each place turned out to be 3.718 for unfamiliar and 3.762 for familiar places. However, the standard deviation for the familiar place plot is 0.41 and unfamiliar one is 1.37 so that star ratings for unfamiliar places looked higher at first.
+
+```{r, echo = FALSE}
+selected_users <- users %>% 
+  filter(review_count > 50) %>% 
+  select(name, user_id, review_count)
+
+user_reviews <- reviews %>% 
+  select(user_id, review_id, stars, business_id) 
+
+business_locations <- business %>% 
+  select(business_id, state)
+
+user_reviews <- left_join(selected_users, user_reviews) %>% 
+  left_join(business_locations) %>% 
+  na.omit
+
+familiar_location <- group_by(user_reviews, user_id, state) %>% 
+  tally()
+
+location_reviews <- aggregate(n ~ user_id, familiar_location, max) %>%
+  left_join(familiar_location) %>% 
+  mutate(most_reviewed = TRUE) %>% 
+  filter(n > 10) %>% 
+  select(-n)
+
+user_reviews <- left_join(user_reviews, location_reviews) 
+user_reviews[is.na(user_reviews)] <- FALSE
+
+# average stars for unfamiliar/familiar area for a user
+avg_star_reviews <- user_reviews %>% 
+  group_by(user_id, most_reviewed) %>% 
+  summarise(avg_star = mean(stars))
+
+ggplot(avg_star_reviews, aes(x = avg_star, 
+                             fill = most_reviewed)) + 
+  geom_density(alpha = 0.5,
+               color = NA) +
+  labs(title = "Reviewers' Behavior Changes When In Unfamilar Locations") +
+  xlab("Average Star Ratings") + 
+  ylab("Density") +
+  scale_fill_manual(name ="Regions",
+                    values = c("blue", "red"),
+                    labels = c("Familiar", "Unfamiliar"))
+```
+>>>>>>> 0676086b6cf5782385c08d3a8351b03fc0b663bb
