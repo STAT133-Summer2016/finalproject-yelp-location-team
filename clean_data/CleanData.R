@@ -1,7 +1,13 @@
+# Header
+# This script tidies the raw JSON data and writes the tidied data into CSV file
+# formats
+
+# libraries
 library(jsonlite)
 library(dplyr)
 library(readr)
 
+# Data: 
 # Read in raw data convert to data frames
 business <- fromJSON(sprintf("[%s]", 
                      paste(read_lines(
