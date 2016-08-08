@@ -16,10 +16,10 @@ business <- fromJSON(sprintf("[%s]",
   flatten() %>% 
   data.frame() %>% 
   select(business_id, open, categories, review_count, state, stars, 
-         `attributes.Noise Level`, `attributes.Attire`, `attributes.Take-out`,
-         `attributes.Takes Reservations`, `attributes.Delivery`,
-         `attributes.Outdoor Seating`, `attributes.Accepts Credit Cards`,
-         `attributes.Happy Hour`) %>% 
+         `attributes.Noise.Level`, `attributes.Attire`, `attributes.Take.out`,
+         `attributes.Takes.Reservations`, `attributes.Delivery`,
+         `attributes.Outdoor.Seating`, `attributes.Accepts.Credit.Cards`,
+         `attributes.Happy.Hour`) %>% 
   filter(open == TRUE, "Restaurants" %in% categories, state %in% state.abb)
 business <- data.frame(lapply(business, as.character), stringsAsFactors=FALSE)
 
