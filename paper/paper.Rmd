@@ -369,7 +369,7 @@ ggplot(avg_star_reviews, aes(x = avg_star,
 
 The density curve for unfamiliar region is smooth and the majority of users tend to give star ratings in between 3 to 4.5 out of 5. Number of people giving 1 or 2 stars while traveling is barely seen. On the other hand, the ratings in familiar places were rather widely distributed. There was a significant portion of users giving star ratings from 1 through 5, even though the peak of the curve is around 4.
 
-The mean rating was 3.718 for unfamiliar and 3.762 for familiar places. However, the standard deviation for the familiar locations plot was 0.41, and unfamiliar one was 1.37 so star rating, explained by the variablity between users who travelled.
+However, it was interesting to see that the mean rating was 3.718 for unfamiliar and 3.762 for familiar places. They were almost equal to each other despite of such user's behavioral changes on familiarity with the location.
 
 ##Conclusion
 
