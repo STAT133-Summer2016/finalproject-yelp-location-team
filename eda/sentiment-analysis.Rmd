@@ -14,6 +14,7 @@ library(ggplot2)
 library(dplyr)
 library(tidytext)
 library(tm)
+library(ggrepel)
 library(purrr)
 source("../functions/PercentAccuracy.R")
 source("../functions/MeanStar.R")
@@ -86,6 +87,11 @@ Pretty fast. I'll stick to this library and generate five box-plots to see if th
 
 ```{r, eval = T}
 # boxplot for each group
+# ggplot(review_scores, aes(star, sentiment)) +
+#   geom_bar(stat = "identity")
+# coloring too messy, histogram/bar graph doesn't capture whole picture
+# want to see if some 1-star ratings have 5s and vice versa
+# boxplot shows this with outliers
 ggplot(review_scores) +
   geom_boxplot(aes(stars, sentiment, group = stars)) +
   labs(x = "Business Star Rating",
@@ -117,6 +123,11 @@ write_csv(summaries, "../clean_data/summaries.csv")
 Now, I'll plot word average star rating vs. word frequency to see what words scored positive ratings. I'll also color by AFINN score to visualize inaccuracies and determine how well they were classified using the mean star rating of all reviews as a baseline metric.
 
 ```{r fig.height = 7, fig.width = 7}
+# x scale log - graph messy otherwise
+# ggrepel - too much text, unreadable 
+# line color black and dotted = most visible
+# color scheme most visible
+# plot less points? not meaningful enough then
 summaries %>% 
   ggplot(aes(reviews, average_star, color = score)) +
   geom_point() +
@@ -148,6 +159,10 @@ print(str_c("Negativity Accuracy: ", percent_neg))
 
 This is pretty informative, but I want to see these words plotted by their valence score and average Yelp rating to visualize if there's a positive correlation here between sentiment score and their star rating. 
 ```{r fig.height = 7}
+# boxplot again?
+# see specific words and overall trend
+# line best fit - shows general trend
+# loess not good fit
 summaries %>% 
   arrange(desc(reviews)) %>% 
   ggplot(aes(score, average_star)) +
@@ -165,6 +180,8 @@ summaries %>%
 Based on a simple linear regression line, words with higher scores are clustered towards 4 and 5-star ratings, while most negative words have pretty low average ratings. Some words like "damn" had higher star ratings despite their low AFINN score, but that could be explained by reviews where writers could have described their food or service as "damn good".
 
 ```{r}
+# histogram complains
+# bar graph good (Y)
 data.frame(
   x = factor(-5:5), 
   y = unlist(-5:5 %>% map(MeanStar))) %>% 

@@ -143,10 +143,10 @@ We first tried to plot this information with points on a map using longitude and
 
 Instead, we ended up with a bar graph, which clearly shows which state has the most number of businesses with over 300 reviews. There were 6 distinct regions in total. Interestingly, the graph shows that the majority of the businesses is located in two states: about 62% of the filtered businesses were located in Nevada and another 31% was in Arizona. 
 
-```{r business, echo = FALSE, fig.align = "center", message = FALSE, fig.height = 3.5, warning = FALSE}
-ggplot(ratings_business,aes(x=stars, y=count)) +  
-  geom_point(col = rgb(0,0,1,0.25), pch = 16, cex = 2) +
-  scale_y_continuous(limits=c(300,5000)) +
+```{r business, echo = F, fig.align = "center", message = F, fig.height = 3.5, warning = F}
+ggplot(ratings_business, aes(x = stars, y = count)) +  
+  geom_jitter(col = rgb(0, 0, 1, 0.25), pch = 16, cex = 2, width = 0.25) +
+  scale_y_continuous(limits = c(300, 5000)) +
   xlab("Star Ratings") + 
   ylab("Review Counts") +
   theme(text = element_text(family = "Times New Roman"))
