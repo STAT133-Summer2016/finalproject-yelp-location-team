@@ -1,5 +1,6 @@
 ---
-title: "Final Paper"
+title: "Yelp Academic Dataset Final Report"
+author: Anuj Desai & Irene Lee
 output: pdf_document
 ---
 
@@ -10,7 +11,6 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(magrittr)
-library(ggmap)
 library(tidytext)
 library(maps)
 library(extrafont)
@@ -23,6 +23,11 @@ source("../functions/MeanStar.R")
 font_import()
 loadfonts()
 ```
+
+
+## Abstract
+
+This paper explores the deep dataset of Round 7 of the Yelp Academic Dataset challenge. With three primary foci, we wanted to analyze the relationship between business attributes and rating, to use sentiment analysis tools to determine the correlation between text in Yelp reviews and the business's rating, and finally to analyze user behavior in unfamiliar locations when reviewers travel. Our findings revealed that while there was no significant evidence of any relationship between business attributes and rating and travel and user rating, there was strong evidence that suggested that review text could predict star rating. 
 
 ## Introduction
 
@@ -99,7 +104,10 @@ Converting the raw data from JSON was quite easy using R libraries. We began by 
 We began by filtering for businesses with more than 300 reviews in the United States. Looking more closely at the business dataset, we noticed a nested data-frame of attributes for each business, so we cleaned and gathered the data so that each row contained one business attribute. Business data set was used to see what makes a business popular and successful; especially by looking at where most-reviewed are clustered and the influence of major business attributes.
 ```{r load_business, echo = FALSE}
 business <- read_csv("../clean_data/yelp_business.csv")
-names(business) <- c("business_id", "open", "categories", "count", "state", "stars", "noise", "attire", "Take-out", "Takes Reservation", "Offers Delivery", "Outdoor Seating", "Accepts Credit Card", "Happy Hour")
+names(business) <- c("business_id", "open", "categories", "count", "state",
+                     "stars", "noise", "attire", "Take-out", 
+                     "Takes Reservation", "Offers Delivery", "Outdoor Seating",
+                     "Accepts Credit Card", "Happy Hour")
 successful_business <- business %>% 
   select(-open) %>% 
   filter(count > 300) %>% 
@@ -135,6 +143,7 @@ Our first hypothesis was that successful businesses would be clustered at certai
 We first tried to plot this information with points on a map using longitude and latitude of the businesses. Points with different sizes stacked up on each other, so the size and color of the points did not tell much information. Even though 900+ points were plotted, there were really only six primary clusters of points so there was no point in having so many small individual points.
 
 Instead, we ended up with a bar graph, which clearly shows which state has the most number of businesses with over 300 reviews. There were 6 distinct regions in total. Interestingly, the graph shows that the majority of the businesses is located in two states: about 62% of the filtered businesses were located in Nevada and another 31% was in Arizona. 
+
 ```{r business, echo = FALSE, fig.align = "center", message = FALSE, fig.height = 3.5, warning = FALSE}
 ggplot(ratings_business,aes(x=stars, y=count)) +  
   geom_point(col = rgb(0,0,1,0.25), pch = 16, cex = 2) +
@@ -144,7 +153,7 @@ ggplot(ratings_business,aes(x=stars, y=count)) +
   theme(text = element_text(family = "Times New Roman"))
 
 ggplot(successful_business, aes(x = reorder(state, -num), 
-                                y= num)) + 
+                                y = num)) + 
   geom_bar(stat = "identity", 
            position = "dodge") +
   xlab("State") + 
@@ -181,7 +190,7 @@ ggplot(business_attributes,
 \end{center}
 
 ####B. Sentiment Analysis
-We hypothesized that words with higher valence scores would produce higher Yelp star ratings for businesses. First, using the R library “wordcloud”, we formed two word clouds for the 100 most frequent words in text reviews with one-star and five-star ratings to determine if there was a distinct difference between the words used.
+We hypothesized that words with higher valence scores would produce higher Yelp star ratings for businesses. First, using the R library “__wordcloud__”, we formed two word clouds for the 100 most frequent words in text reviews with one-star and five-star ratings to determine if there was a distinct difference between the words used.
 
 ```{r wordcloud, echo = FALSE, message = FALSE, fig.height = 3.5}
 reviews_text <- read_csv("../clean_data/reviews_text.csv")
@@ -348,12 +357,12 @@ ggplot(avg_star_reviews, aes(x = avg_star,
                              fill = most_reviewed)) + 
   geom_density(alpha = 0.5,
                color = NA) +
-  labs(title = "Reviewers' Behavior Changes When In Unfamilar Locations") +
   xlab("Average Star Ratings") + 
   ylab("Density") +
   scale_fill_manual(name ="Regions",
                     values = c("blue", "red"),
-                    labels = c("Familiar", "Unfamiliar"))
+                    labels = c("Familiar", "Unfamiliar")) +
+  theme(text = element_text(family = "Times New Roman"))
 ```
 \begin{center}
 \textbf{Figure 8: "Reviewers' Behavior Changes When In Unfamilar Locations"}
@@ -364,6 +373,7 @@ The density curve for unfamiliar region is smooth and the majority of users tend
 The mean rating was 3.718 for unfamiliar and 3.762 for familiar places. However, the standard deviation for the familiar locations plot was 0.41, and unfamiliar one was 1.37 so star rating, explained by the variablity between users who travelled.
 
 ##Conclusion
+
 In conclusion, we investigated several questions related to the Yelp datasets, and our results were promising.
 
 There is a close relationship between star ratings and number of reviews--the popularity of the business. There are certain locations where most reviewed businesses are clustered; hence, location also has some influence over the star ratings. However, no significant correlations between business attributes and the review ratings were found.
