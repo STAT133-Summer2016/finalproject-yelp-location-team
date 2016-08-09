@@ -138,13 +138,16 @@ To explore this data, we researched different lexicons and found ANEW (Affective
 
 ####A. Location Mining and Business Attributes
 
-Our first hypothesis was that successful businesses would be clustered at certain points. We first tried to plot this information with points on a map using longitude and latitude of the businesses.  Points with different sizes stacked up on each other, so the size and color of the points did not tell much information. Even though 900+ points were plotted, there were really only six primary clusters of points so there was no point in having so many small individual points.
+Our first hypothesis was that successful businesses would be clustered at certain states. We examined the data set and wanted to know about the relationship between the number of reviews and the star ratings. It turned out that when number of reviews increases, the star ratings gets clustered around 3.5 out of 5. Hence, we hypothesized that high number of reviews, especially those locations with most reviewed businesses, will have positive influence to the star ratings.
+
+We first tried to plot this information with points on a map using longitude and latitude of the businesses. Points with different sizes stacked up on each other, so the size and color of the points did not tell much information. Even though 900+ points were plotted, there were really only six primary clusters of points so there was no point in having so many small individual points.
 
 Instead, we ended up with a bar graph, which clearly shows which state has the most number of businesses with over 300 reviews. There were 6 distinct regions in total. Interestingly, the graph shows that the majority of the businesses is located in two states: about 62% of the filtered businesses were located in Nevada and another 31% was in Arizona. 
-```{r business, echo = F, fig.align = "center", message = F, fig.height = 3.5}
-ggplot(ratings_business, aes(x = stars, y = count)) +  
-  geom_point(col = rgb(0, 0, 1, 0.25), pch = 16, cex = 2) +
-  scale_y_continuous(limits = c(300, 5000)) +
+
+```{r business, echo = FALSE, fig.align = "center", message = FALSE, fig.height = 3.5, warning = FALSE}
+ggplot(ratings_business,aes(x=stars, y=count)) +  
+  geom_point(col = rgb(0,0,1,0.25), pch = 16, cex = 2) +
+  scale_y_continuous(limits=c(300,5000)) +
   xlab("Star Ratings") + 
   ylab("Review Counts") +
   theme(text = element_text(family = "Times New Roman"))
@@ -165,7 +168,7 @@ ggplot(successful_business, aes(x = reorder(state, -num),
 We also hypothesized that there were certain business attributes that would help businesses succeed in terms of number of reviews and ratings. We first tried to include two representative plots, ‘Noise Level’ and ‘Attire Type’. However, subsetting too much of the data set made us lose valuable information about the dataset. Choosing only two random attributes and analyzing was too narrow an exploration of the data.
 
 As such, six major attributes were chosen. There were slight differences in star ratings based on some categories. For example, businesses that accept credit cards seemed to have higher ratings compared to those that don't. Interestingly, restaurants that do not offer delivery showed slightly higher star ratings than those who do. There were no major findings from the plots, however. Except for slight differences in average ratings of certain attributes, there was no significant difference evident. The user review ratings were evenly spread out even if the specific attribute existed or not. Our findings pointed out that business attributes do not have huge influences over user ratings.
-```{r attributes, echo = FALSE, fig.align = "center"}
+```{r attributes, echo = FALSE, fig.align = "center", message = FALSE}
 business_attributes <- business %>% 
   filter(count > 300) %>% 
   select(-open, -count, -categories, -noise, -attire) %>% 
@@ -318,7 +321,7 @@ First, we faceted the graph after selecting the top 15 users with most reviews. 
 
 Another approach we took was to plot users' ratings in a histogram. From the filtered user dataset, one familiar region was chosen per user. This was based on where the user wrote the most reviews. Two average star ratings were calculated for a user: one for reviews in familiar state and another from reviews when travelling to unfamiliar places. The best visualization for such a graph was using a density plot, shown below.
 
-```{r density, echo = FALSE, fig.align = "center"}
+```{r density, echo = FALSE, fig.align = "center", message = FALSE}
 selected_users <- users %>% 
   filter(review_count > 50) %>% 
   select(name, user_id, review_count)
@@ -370,9 +373,16 @@ The density curve for unfamiliar region is smooth and the majority of users tend
 The mean rating was 3.718 for unfamiliar and 3.762 for familiar places. However, the standard deviation for the familiar locations plot was 0.41, and unfamiliar one was 1.37 so star rating, explained by the variablity between users who travelled.
 
 ##Conclusion
-In conclusion, we investigated several questions related to the Yelp academic dataset, and our results were promising. 
+
+In conclusion, we investigated several questions related to the Yelp datasets, and our results were promising.
+
+There is a close relationship between star ratings and number of reviews--the popularity of the business. There are certain locations where most reviewed businesses are clustered; hence, location also has some influence over the star ratings. However, no significant correlations between business attributes and the review ratings were found.
 
 Using natural language processing and text mining, we confirmed our original hypothesis that a positive correlation exists between AFINN sentiment score and star rating. 86.59% of words with negative scores appeared in reviews that were below the mean rating of all reviews from our sample.
 
+Lastly, by examining the behavior of users while travelling showed that most users tend to give mediocre ratings when in unfamiliar places. On the other hand, the ratings were evenly distributed while in familiar locations. Surprisingly the mean of each situation was about the same. 
+
 ##Future Work
 We would use cross-validation to create a training set and test set for our sample of reviews from the dataset. We can create a classifier using sentiment analysis and test our trained classifier against the test set to predict business ratings based on the text of the reviews. Additionally, we could look at possible correlations between restaurant reviews and ratings and tips, looking at the tips data provided with the dataset. 
+
+At last, we could use full data set instead of an academic, truncated data provided for data challenge. This way we could utilize more information to make even accurate plots and analysis. Using this, a comparison of user trends in different countries will be interesting for further investigation.
