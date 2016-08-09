@@ -26,6 +26,8 @@ business <- read_csv("../clean_data/yelp_business.csv")
 ```
 
 ```{r}
+# Filters out businesses with more than 300 reviews
+# Gets the number of businesses in such category grouping by state.
 successful_business <- business %>% 
   select(-open) %>% 
   filter(review_count > 300) %>% 

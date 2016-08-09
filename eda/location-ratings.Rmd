@@ -32,23 +32,29 @@ Since I was using an academic data set provided by Yelp, it only contained some 
 The final data set was produced by combining everything above with users' average star rating per state. 
 
 ```{r}
+# Users wrote >= 50 reviews
 selected_users <- users %>% 
   filter(review_count > 50) %>% 
   select(name, user_id, review_count)
 
+# Cleaned review data
 user_reviews <- reviews %>% 
   select(user_id, review_id, stars, business_id) 
-  
+
+# Cleaned business data
 business_locations <- business %>% 
   select(business_id, state)
 
+# Selected user data joined with review and business data
 user_reviews <- left_join(selected_users, user_reviews) %>% 
   left_join(business_locations) %>% 
   na.omit
 
+# Computed each number of reviews a user wrote in each state
 familiar_location <- group_by(user_reviews, user_id, state) %>% 
   tally()
 
+# 
 location_reviews <- aggregate(n ~ user_id, familiar_location, max) %>%
   left_join(familiar_location) %>% 
   mutate(most_reviewed = TRUE) %>% 
