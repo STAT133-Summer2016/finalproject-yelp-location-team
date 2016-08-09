@@ -161,13 +161,14 @@ This is pretty informative, but I want to see these words plotted by their valen
 ```{r fig.height = 7}
 # boxplot again?
 # see specific words and overall trend
-# line doesn't fit that well but shows positive trend so best fit
+# line best fit - shows general trend
+# loess not good fit
 summaries %>% 
   arrange(desc(reviews)) %>% 
   ggplot(aes(score, average_star)) +
   geom_point(aes(size = reviews)) +
   geom_text(aes(label = word), vjust = 1, hjust = 1, check_overlap = TRUE) +
-  geom_smooth(method = "loess", se = FALSE) +
+  geom_smooth(method = "lm", se = FALSE) +
   xlab("Valence Score") +
   ylab("Average Yelp Stars") +
   labs(title = "Average Yelp Star Rating vs. Valence Score") +
